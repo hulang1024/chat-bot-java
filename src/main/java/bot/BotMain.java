@@ -3,6 +3,8 @@ package bot;
 import bot.scheme.OutputHandler;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
+import net.mamoe.mirai.contact.Group;
+import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.QuoteReply;
@@ -58,7 +60,12 @@ public class BotMain {
                 }
             }
 
-            EvalResult evalResult = schemeEvaluator.eval(schemeHost, expr, event.getSender());
+            Group group = null;
+            if (event instanceof GroupMessageEvent) {
+                group = ((GroupMessageEvent) event).getGroup();
+            }
+
+            EvalResult evalResult = schemeEvaluator.eval(schemeHost, expr, event.getSender(), group);
 
             MessageChainBuilder messageChainBuilder = new MessageChainBuilder();
             if (hasQuoteReply) {
