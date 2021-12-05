@@ -44,7 +44,7 @@ public class SchemeEvaluator {
         } catch (IOException e) {
             e.printStackTrace();
             EvalResult result = new EvalResult();
-            result.error = "请求发生异常";
+            result.error = "\uD83D\uDC7B程序执行请求好像发生异常了哦，请重试。";
             return result;
         }
     }

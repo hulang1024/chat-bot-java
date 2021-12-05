@@ -73,7 +73,7 @@ public class BotMain {
             }
 
             if (StringUtils.isNotEmpty(evalResult.error)) {
-                messageChainBuilder.add("错误:\n" + evalResult.error);
+                messageChainBuilder.add("\uD83C\uDF88错误:\n" + evalResult.error);
             } else {
                 boolean hasOutput = OutputHandler.handle(messageChainBuilder, evalResult.output, event);
                 if (StringUtils.isNotEmpty(evalResult.value)) {
