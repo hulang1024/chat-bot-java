@@ -1,8 +1,6 @@
 package bot.scheme;
 
 import bot.BotMain;
-import net.mamoe.mirai.contact.AudioSupported;
-import net.mamoe.mirai.contact.Contact;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;

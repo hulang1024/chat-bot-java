@@ -48,12 +48,16 @@ public class BotMain {
             String expr = "";
             boolean hasQuoteReply = true;
 
-            if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
+            if (messageString.startsWith("(") && messageString.contains(")")) {
+                hasQuoteReply = true;
+                expr = messageString;
+            } else if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
                 || messageString.startsWith(commandPrefixWithoutQuoteReply2)) {
                 expr = messageString.substring(commandPrefixWithoutQuoteReply1.length());
                 hasQuoteReply = false;
             } else {
                 if (messageString.startsWith(commandPrefixWithQuoteReply)) {
+                    hasQuoteReply = true;
                     expr = messageString.substring(commandPrefixWithQuoteReply.length());
                 } else {
                     return;
