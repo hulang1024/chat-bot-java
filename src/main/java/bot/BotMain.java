@@ -13,13 +13,22 @@ import org.apache.commons.lang3.StringUtils;
 import bot.scheme.EvalResult;
 import bot.scheme.SchemeEvaluator;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class BotMain {
     public static final Properties config = new Properties();
-    public static void main(String[] args) throws IOException {
-        config.load(BotMain.class.getClassLoader().getResourceAsStream("config.properties"));
+
+    public static void main(String[] args) {
+        try {
+            loadConfig();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
         Bot bot = BotFactory.INSTANCE.newBot(
             Long.parseLong(config.getProperty("bot.qq")),
@@ -92,5 +101,12 @@ public class BotMain {
 
             event.getSubject().sendMessage(messageChainBuilder.build());
         });
+    }
+
+    private static void loadConfig() throws IOException {
+        File file = new File(System.getProperty("user.dir"), "config.properties");
+        try (InputStream in = new FileInputStream(file)) {
+            config.load(in);
+        }
     }
 }
