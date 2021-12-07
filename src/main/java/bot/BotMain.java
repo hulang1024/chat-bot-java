@@ -95,7 +95,7 @@ public class BotMain {
                         if (hasOutput) {
                             messageChainBuilder.add("\n"); // output后面加换行
                         }
-                        messageChainBuilder.add(evalResult.value);
+                        messageChainBuilder.add(StringUtils.trim(evalResult.value));
                     }
                 }
             }

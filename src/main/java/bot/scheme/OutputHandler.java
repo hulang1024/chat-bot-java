@@ -66,7 +66,7 @@ public class OutputHandler {
             output = output.replaceAll(audioUrlPattern.pattern(), "");
         }
 
-        messageChainBuilder.add(output);
+        messageChainBuilder.add(StringUtils.trim(output));
         return true;
     }
 }
