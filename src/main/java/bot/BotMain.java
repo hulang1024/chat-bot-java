@@ -48,7 +48,7 @@ public class BotMain {
             String expr = "";
             boolean hasQuoteReply = true;
 
-            if (messageString.startsWith("(") && messageString.contains(")")) {
+            if (messageString.startsWith("(") && messageString.charAt(1) != '"' && messageString.contains(")")) {
                 hasQuoteReply = true;
                 expr = messageString;
             } else if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
@@ -56,7 +56,7 @@ public class BotMain {
                 expr = messageString.substring(commandPrefixWithoutQuoteReply1.length());
                 hasQuoteReply = false;
             } else {
-                if (messageString.startsWith(commandPrefixWithQuoteReply)) {
+                if (messageString.startsWith(commandPrefixWithQuoteReply) && messageString.charAt(1) != '<') {
                     hasQuoteReply = true;
                     expr = messageString.substring(commandPrefixWithQuoteReply.length());
                 } else {
@@ -77,7 +77,7 @@ public class BotMain {
             }
 
             if (StringUtils.isNotEmpty(evalResult.error)) {
-                messageChainBuilder.add("\uD83C\uDF88错误:\n" + evalResult.error);
+                messageChainBuilder.add("\uD83C\uDF88 " + evalResult.error);
             } else {
                 boolean hasOutput = OutputHandler.handle(messageChainBuilder, evalResult.output, event);
                 if (StringUtils.isNotEmpty(evalResult.value)) {
