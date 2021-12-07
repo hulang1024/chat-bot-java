@@ -1,6 +1,7 @@
 package bot;
 
 import bot.scheme.OutputHandler;
+import bot.scheme.SchemeCodeChecker;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.contact.Group;
@@ -57,8 +58,8 @@ public class BotMain {
             String expr = "";
             boolean hasQuoteReply = true;
 
-            if (messageString.startsWith("(") && messageString.charAt(1) != '"' && messageString.contains(")")) {
-                hasQuoteReply = true;
+            if (SchemeCodeChecker.maybeHasSchemeCode(messageString)) {
+                hasQuoteReply = false;
                 expr = messageString;
             } else if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
                 || messageString.startsWith(commandPrefixWithoutQuoteReply2)) {
