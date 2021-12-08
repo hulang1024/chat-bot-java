@@ -1,7 +1,7 @@
 package bot;
 
-import bot.scheme.OutputHandler;
-import bot.scheme.SchemeCodeChecker;
+import bot.eval.OutputHandler;
+import bot.eval.LispCodeChecker;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
 import net.mamoe.mirai.contact.Group;
@@ -11,8 +11,8 @@ import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.BotConfiguration;
 import org.apache.commons.lang3.StringUtils;
-import bot.scheme.EvalResult;
-import bot.scheme.SchemeEvaluator;
+import bot.eval.EvalResult;
+import bot.eval.Evaluator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,9 +45,8 @@ public class BotMain {
     }
 
     public static void loop(Bot bot) {
-        SchemeEvaluator schemeEvaluator = new SchemeEvaluator();
+        Evaluator evaluator = new Evaluator(config.getProperty("evalServer.host"));
 
-        String schemeHost = config.getProperty("scheme.host");
         String commandPrefixWithQuoteReply = "#";
         String commandPrefixWithoutQuoteReply1 = "!";
         String commandPrefixWithoutQuoteReply2 = "！";
@@ -58,7 +57,7 @@ public class BotMain {
             String expr = "";
             boolean hasQuoteReply = true;
 
-            if (SchemeCodeChecker.maybeHasSchemeCode(messageString)) {
+            if (LispCodeChecker.maybeHasLispCode(messageString)) {
                 hasQuoteReply = false;
                 expr = messageString;
             } else if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
@@ -79,7 +78,7 @@ public class BotMain {
                 group = ((GroupMessageEvent) event).getGroup();
             }
 
-            EvalResult evalResult = schemeEvaluator.eval(schemeHost, expr, event.getSender(), group);
+            EvalResult evalResult = evaluator.eval(expr, event.getSender(), group);
 
             MessageChainBuilder messageChainBuilder = new MessageChainBuilder();
             if (hasQuoteReply) {

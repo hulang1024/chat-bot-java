@@ -1,4 +1,4 @@
-package bot.scheme;
+package bot.eval;
 
 public class EvalResult {
     public String output;

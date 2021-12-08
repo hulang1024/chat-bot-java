@@ -1,4 +1,4 @@
-package bot.scheme;
+package bot.eval;
 
 import bot.BotMain;
 import net.mamoe.mirai.contact.Group;
@@ -26,9 +26,9 @@ public class OutputHandler {
         Matcher matcher = imageIdPattern.matcher(output);
         if (matcher.find()) {
             String filename = matcher.group(1);
-            String schemeTempPath = BotMain.config.getProperty("scheme.tempPath");
+            String tempPath = BotMain.config.getProperty("evalServer.tempPath");
             try {
-                File file = new File(String.format("%s/%s", schemeTempPath, filename));
+                File file = new File(String.format("%s/%s", tempPath, filename));
                 net.mamoe.mirai.message.data.Image image = event.getSubject()
                     .uploadImage(ExternalResource.create(file));
                 file.delete();

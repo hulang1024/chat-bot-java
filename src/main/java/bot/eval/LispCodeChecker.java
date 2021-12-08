@@ -1,7 +1,7 @@
-package bot.scheme;
+package bot.eval;
 
-public class SchemeCodeChecker {
-    public static boolean maybeHasSchemeCode(String str) {
+public class LispCodeChecker {
+    public static boolean maybeHasLispCode(String str) {
         char firstCh = str.charAt(0);
 
         if (firstCh == ';' && str.contains("\n")) {

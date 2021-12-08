@@ -1,4 +1,4 @@
-package bot.scheme;
+package bot.eval;
 
 import com.google.gson.Gson;
 import com.squareup.moshi.JsonAdapter;
@@ -11,15 +11,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SchemeEvaluator {
+public class Evaluator {
     private static final OkHttpClient client = new OkHttpClient();
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final Gson gson = new Gson();
+    private static final Moshi moshi = new Moshi.Builder().build();
+    private static final JsonAdapter<EvalResult> httpAPIResultAdapter = moshi.adapter(EvalResult.class);
 
-    private final static Gson gson = new Gson();
-    private final Moshi moshi = new Moshi.Builder().build();
-    private final JsonAdapter<EvalResult> httpAPIResultAdapter = moshi.adapter(EvalResult.class);
+    private String host;
 
-    public EvalResult eval(String host, String expr, User sender, Group group) {
+    public Evaluator(String host) {
+        this.host = host;
+    }
+
+    public EvalResult eval(String expr, User sender, Group group) {
         Map<String, Object> senderInfo = new HashMap<>();
         senderInfo.put("id", sender.getId());
         senderInfo.put("nickname", sender.getNick());
