@@ -61,13 +61,6 @@ public class EnvManager {
         return apiAccess.perform("env/reset", params);
     }
 
-    public APIResult changeEnvScope(String id, EnvScope newScope) {
-        getEnv(id).ifPresent((env) -> {
-            env.scope = newScope;
-        });
-        return APIResult.ok();
-    }
-
     public Set<EnvInfo> getEnvs() {
         return envs;
     }

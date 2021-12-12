@@ -34,7 +34,7 @@ public class AdminCommandHandler {
             return false;
         }
 
-        String[] commandParts = messageString.split(" ");
+        String[] commandParts = messageString.split("\\s");
         if (commandParts.length < 2) {
             return false;
         }
@@ -97,11 +97,7 @@ public class AdminCommandHandler {
                 }
                 break;
             case "env/change_scope":
-                if (commandArgs.length == 3) {
-                    String envId = commandArgs[0];
-                    String newScopeName = commandArgs[2].toLowerCase();
-                    result = envManager.changeEnvScope(envId, EnvScope.from(newScopeName));
-                }
+                result = onChangeEnvScope(commandArgs);
                 break;
             case "env/remove":
                 if (commandArgs.length == 1) {
@@ -162,5 +158,43 @@ public class AdminCommandHandler {
         messageChainBuilder.add(message);
         event.getSubject().sendMessage(messageChainBuilder.build());
         return true;
+    }
+
+    private APIResult onChangeEnvScope(String commandArgs[]) {
+        if (commandArgs.length < 2) {
+            return null;
+        }
+
+        String envId = commandArgs[0];
+        if (!envManager.getEnv(envId).isPresent()) {
+            return null;
+        }
+
+        EnvInfo env = envManager.getEnv(envId).get();
+        EnvScope newScope = EnvScope.from(commandArgs[1].toLowerCase());
+        if (newScope == null) {
+            return null;
+        }
+
+        switch (newScope) {
+            case Public:
+                env.ownerId = 0;
+                break;
+            case Group:
+            case Private:
+                if (commandArgs.length == 3) {
+                    try {
+                        env.ownerId = Long.parseLong(commandArgs[2]);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+                break;
+        }
+
+        env.scope = newScope;
+        return APIResult.ok();
     }
 }
