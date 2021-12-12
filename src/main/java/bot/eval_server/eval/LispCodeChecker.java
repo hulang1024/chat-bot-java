@@ -1,4 +1,4 @@
-package bot.eval;
+package bot.eval_server.eval;
 
 public class LispCodeChecker {
     public static boolean maybeHasLispCode(String str) {

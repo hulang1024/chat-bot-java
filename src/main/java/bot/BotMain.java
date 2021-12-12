@@ -1,27 +1,26 @@
 package bot;
 
-import bot.eval.OutputHandler;
-import bot.eval.LispCodeChecker;
+import bot.eval_server.APIAccess;
+import bot.eval_server.APIResult;
+import bot.eval_server.EnvInfo;
+import bot.eval_server.EnvScope;
 import net.mamoe.mirai.Bot;
 import net.mamoe.mirai.BotFactory;
-import net.mamoe.mirai.contact.Group;
-import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
-import net.mamoe.mirai.message.data.MessageChainBuilder;
-import net.mamoe.mirai.message.data.QuoteReply;
 import net.mamoe.mirai.utils.BotConfiguration;
-import org.apache.commons.lang3.StringUtils;
-import bot.eval.EvalResult;
-import bot.eval.Evaluator;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
+import java.util.StringJoiner;
 
 public class BotMain {
     public static final Properties config = new Properties();
+    public static APIAccess evalServerApiAccess;
 
     public static void main(String[] args) {
         try {
@@ -45,61 +44,19 @@ public class BotMain {
     }
 
     public static void loop(Bot bot) {
-        Evaluator evaluator = new Evaluator(config.getProperty("evalServer.host"));
+        evalServerApiAccess = new APIAccess(config.getProperty("evalServer.host"));
 
-        String commandPrefixWithQuoteReply = "#";
-        String commandPrefixWithoutQuoteReply1 = "!";
-        String commandPrefixWithoutQuoteReply2 = "！";
+        AdminCommandHandler adminCommandHandler = new AdminCommandHandler(evalServerApiAccess);
+        EvalLispMessageHandler evalLispMessageHandler = new EvalLispMessageHandler(evalServerApiAccess);
 
         bot.getEventChannel().subscribeAlways(MessageEvent.class, (event) -> {
             String messageString = event.getMessage().contentToString().trim();
 
-            String expr = "";
-            boolean hasQuoteReply = true;
-
-            if (LispCodeChecker.maybeHasLispCode(messageString)) {
-                hasQuoteReply = false;
-                expr = messageString;
-            } else if (messageString.startsWith(commandPrefixWithoutQuoteReply1)
-                || messageString.startsWith(commandPrefixWithoutQuoteReply2)) {
-                expr = messageString.substring(commandPrefixWithoutQuoteReply1.length());
-                hasQuoteReply = false;
+            if (adminCommandHandler.testAndHandle(messageString, event)) {
+                return;
             } else {
-                if (messageString.startsWith(commandPrefixWithQuoteReply) && messageString.charAt(1) != '<') {
-                    hasQuoteReply = true;
-                    expr = messageString.substring(commandPrefixWithQuoteReply.length());
-                } else {
-                    return;
-                }
+                evalLispMessageHandler.testAndHandle(messageString, event);
             }
-
-            Group group = null;
-            if (event instanceof GroupMessageEvent) {
-                group = ((GroupMessageEvent) event).getGroup();
-            }
-
-            EvalResult evalResult = evaluator.eval(expr, event.getSender(), group);
-
-            MessageChainBuilder messageChainBuilder = new MessageChainBuilder();
-            if (hasQuoteReply) {
-                messageChainBuilder.add(new QuoteReply(event.getMessage()));
-            }
-
-            if (StringUtils.isNotEmpty(evalResult.error)) {
-                messageChainBuilder.add("\uD83C\uDF88 " + evalResult.error);
-            } else {
-                boolean hasOutput = OutputHandler.handle(messageChainBuilder, evalResult.output, event);
-                if (StringUtils.isNotEmpty(evalResult.value)) {
-                    if (!hasOutput || !"#<void>".equals(evalResult.value)) {
-                        if (hasOutput) {
-                            messageChainBuilder.add("\n"); // output后面加换行
-                        }
-                        messageChainBuilder.add(StringUtils.trim(evalResult.value));
-                    }
-                }
-            }
-
-            event.getSubject().sendMessage(messageChainBuilder.build());
         });
     }
 

@@ -1,4 +1,4 @@
-package bot.eval;
+package bot.eval_server.eval;
 
 import bot.BotMain;
 import net.mamoe.mirai.contact.Group;
