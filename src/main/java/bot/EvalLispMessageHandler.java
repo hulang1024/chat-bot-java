@@ -4,6 +4,7 @@ import bot.eval_server.*;
 import bot.eval_server.eval.Evaluator;
 import bot.eval_server.eval.LispCodeChecker;
 import bot.eval_server.eval.OutputHandler;
+import bot.eval_server.eval.exn.EvalExnResultHandler;
 import net.mamoe.mirai.contact.Group;
 import net.mamoe.mirai.event.events.GroupMessageEvent;
 import net.mamoe.mirai.event.events.MessageEvent;
@@ -96,8 +97,11 @@ public class EvalLispMessageHandler {
             }
             if (canUseEnv) {
                 APIResult evalResult = evaluator.eval(expr, env.id, event.getSender(), group);
-                if (StringUtils.isNotEmpty(evalResult.error)) {
-                    messageChainBuilder.add(errorPrefixMessage + evalResult.error);
+                if (!evalResult.isOk()) {
+                    String text = EvalExnResultHandler.toReadableText(evalResult);
+                    if (StringUtils.isNotEmpty(text)) {
+                        messageChainBuilder.add(errorPrefixMessage + text);
+                    }
                 } else {
                     boolean hasOutput = OutputHandler.handle(messageChainBuilder, evalResult.output, event);
                     if (StringUtils.isNotEmpty(evalResult.value)) {
