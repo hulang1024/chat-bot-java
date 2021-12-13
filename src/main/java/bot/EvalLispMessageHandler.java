@@ -98,7 +98,7 @@ public class EvalLispMessageHandler {
             if (canUseEnv) {
                 APIResult evalResult = evaluator.eval(expr, env.id, event.getSender(), group);
                 if (!evalResult.isOk()) {
-                    String text = EvalExnResultHandler.toReadableText(evalResult);
+                    String text = EvalExnResultHandler.toReadableText(evalResult, expr);
                     if (StringUtils.isNotEmpty(text)) {
                         messageChainBuilder.add(errorPrefixMessage + text);
                     }

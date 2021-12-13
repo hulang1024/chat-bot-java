@@ -14,13 +14,13 @@ public class EvalExnResultHandler {
         put("out-of-memory", new OutOfMemoryExnHandler());
     }};
 
-    public static String toReadableText(APIResult result) {
+    public static String toReadableText(APIResult result, String src) {
         if (result.data instanceof Map) {
             Map<String, Object> exnData = (Map) result.data;
 
             String type = (String) exnData.get("type");
             return Optional.ofNullable(exnHandlerMap.get(type))
-                .map(exnHandler -> exnHandler.toReadableText(exnData, result.error))
+                .map(exnHandler -> exnHandler.toReadableText(exnData, result.error, src))
                 .orElseGet(() -> result.error);
         } else {
             return result.error;

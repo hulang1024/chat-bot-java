@@ -8,6 +8,7 @@ public class LispCodeChecker {
             return true;
         }
 
-        return str.startsWith("(") && str.charAt(1) != '"' && str.contains(")");
+        return (str.startsWith("(") || str.startsWith("（")) &&
+            str.charAt(1) != '"' && (str.contains(")") || str.contains("）"));
     }
 }
