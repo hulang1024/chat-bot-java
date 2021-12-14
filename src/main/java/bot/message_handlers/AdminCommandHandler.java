@@ -1,21 +1,23 @@
-package bot;
+package bot.message_handlers;
 
+import bot.AdminManager;
+import bot.block.BlockUser;
+import bot.block.BlockUserManager;
 import bot.eval_server.*;
 import bot.eval_server.eval.Evaluator;
+import bot.utils.DateTimeUtils;
+import bot.utils.DurationExpr;
 import net.mamoe.mirai.event.events.MessageEvent;
 import net.mamoe.mirai.message.data.MessageChainBuilder;
 import net.mamoe.mirai.message.data.QuoteReply;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 public class AdminCommandHandler {
-    private List<Long> adminIds;
 
     private EnvManager envManager;
 
@@ -24,9 +26,6 @@ public class AdminCommandHandler {
     public AdminCommandHandler(APIAccess apiAccess) {
         this.apiAccess = apiAccess;
         envManager = new EnvManager(apiAccess);
-        adminIds = Arrays.stream(BotMain.config.getProperty("admin.ids").split(","))
-            .map(Long::parseLong)
-            .collect(Collectors.toList());
     }
 
     public boolean testAndHandle(String messageString, MessageEvent event) {
@@ -42,7 +41,7 @@ public class AdminCommandHandler {
         MessageChainBuilder messageChainBuilder = new MessageChainBuilder();
         messageChainBuilder.add(new QuoteReply(event.getMessage()));
 
-        if (! adminIds.contains(event.getSender().getId())) {
+        if (! AdminManager.isAdmin(event.getSender())) {
             messageChainBuilder.add("无权限");
             event.getSubject().sendMessage(messageChainBuilder.build());
             return true;
@@ -65,10 +64,8 @@ public class AdminCommandHandler {
                 if (commandArgs.length == 1) {
                     String[] pair = commandArgs[0].split("=");
                     if ("timeout".equals(pair[0])) {
-                        try {
-                            int timeout = Integer.parseInt(pair[1]);
-                            result = new EvalAPI(apiAccess).config(timeout);
-                        } catch (Exception e) {}
+                        int timeout = Integer.parseInt(pair[1]);
+                        result = new EvalAPI(apiAccess).config(timeout);
                     }
                 }
                 break;
@@ -121,19 +118,64 @@ public class AdminCommandHandler {
             case "env/ids":
                 result = envManager.getEnvIds();
                 break;
-            case "envs":
+            case "envs": {
                 StringJoiner joiner = new StringJoiner("\n");
                 String format = "%-14s\t%-14s\t%s";
                 joiner.add(String.format(format, "Id", "Owner", "Scope"));
                 envManager.getEnvs()
-                    .stream()
-                    .sorted((x, y) -> x.scope.ordinal() - y.scope.ordinal())
-                    .forEach(env -> {
-                        joiner.add(String.format(format, env.id, env.ownerId, env.scope));
-                    });
+                        .stream()
+                        .sorted(Comparator.comparingInt(x -> x.scope.ordinal()))
+                        .forEach(env ->
+                            joiner.add(String.format(format, env.id, env.ownerId, env.scope)));
                 result = new APIResult();
                 result.data = joiner.toString();
                 break;
+            }
+
+            case "block": {
+                if (commandArgs.length >= 1) {
+                    String action = commandArgs[0];
+
+                    switch (action) {
+                        case "list": {
+                            StringJoiner joiner = new StringJoiner("\n");
+                            String format = "%-14s\t%-14s\t%s";
+                            joiner.add(String.format(format, "Id", "StartTime", "Minutes"));
+                            BlockUserManager.getAll().forEach(blockUser ->
+                                joiner.add(String.format(format,
+                                    blockUser.getId(),
+                                    DateTimeUtils.getSimpleToMinute(blockUser.startTime),
+                                    blockUser.minutes)));
+                            result = new APIResult();
+                            result.data = joiner.toString();
+                            break;
+                        }
+                        case "+":
+                        case "add":
+                            if (commandArgs.length == 3) {
+                                long userId = Long.parseLong(commandArgs[1]);
+                                int minutes = DurationExpr.parseToMinutes(commandArgs[2], 30);
+                                BlockUser blockUser = new BlockUser(userId);
+                                blockUser.startTime = LocalDateTime.now();
+                                blockUser.minutes = minutes;
+                                BlockUserManager.add(blockUser);
+                                result = APIResult.ok();
+                            }
+                            break;
+                        case "-":
+                        case "remove":
+                            if (commandArgs.length == 2) {
+                                long userId = Long.parseLong(commandArgs[1]);
+                                BlockUserManager.remove(userId);
+                                result = APIResult.ok();
+                                break;
+                            }
+                        case "clear":
+                            BlockUserManager.clear();
+                            result = APIResult.ok();
+                    }
+                }
+            }
         }
 
         String message;
@@ -160,7 +202,7 @@ public class AdminCommandHandler {
         return true;
     }
 
-    private APIResult onChangeEnvScope(String commandArgs[]) {
+    private APIResult onChangeEnvScope(String[] commandArgs) {
         if (commandArgs.length < 2) {
             return null;
         }

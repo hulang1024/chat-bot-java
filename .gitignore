@@ -7,5 +7,6 @@
 /cache/
 /bin/
 /src/main/resources/config.properties
+/config.properties
 /src/main/resources/META-INF/
 /device*.json

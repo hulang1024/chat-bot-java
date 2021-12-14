@@ -14,7 +14,7 @@ public enum EnvScope {
             case "private":
                 return EnvScope.Private;
             default:
-                return null;
+                return EnvScope.Public;
         }
     }
 }

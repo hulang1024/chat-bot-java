@@ -1,4 +1,4 @@
-package bot;
+package bot.utils;
 
 public class RandomUtils {
     public static int getInt(int max) {

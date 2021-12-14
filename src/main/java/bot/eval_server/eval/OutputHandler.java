@@ -69,4 +69,22 @@ public class OutputHandler {
         messageChainBuilder.add(StringUtils.trim(output));
         return true;
     }
+
+    public static boolean isBigString(String str) {
+        if (StringUtils.isEmpty(str)) {
+            return false;
+        }
+        return str.length() > 800 || countLine(str) > 30;
+    }
+
+    public static int countLine(String str) {
+        int lineCount = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '\n' || c == '\r') {
+                lineCount++;
+            }
+        }
+        return lineCount;
+    }
 }
