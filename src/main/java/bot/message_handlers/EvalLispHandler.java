@@ -22,8 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EvalLispHandler {
-    private static Pattern usePrefixWithQuoteReplyPattern = Pattern.compile("^(\\s*#\\s+)\\S.*");
-    private static Pattern usePrefixWithoutQuoteReplyPattern = Pattern.compile("^(\\s*[!！]\\s*)\\S.*");
+    private static Pattern usePrefixWithQuoteReplyPattern = Pattern.compile("^(\\s*#\\s+)\\S(.|\\s)*");
+    private static Pattern usePrefixWithoutQuoteReplyPattern = Pattern.compile("^(\\s*[!！]\\s*)\\S(.|\\s)*");
     private static Pattern useEnvPattern = Pattern.compile("\\s*#env\\s+([\\w-]+)");
 
     private Evaluator evaluator;
