@@ -19,7 +19,8 @@ public class OutputHandler {
     private static Pattern imageUrlPattern = Pattern.compile("\\[s:image:url=(.+)\\]");
     private static Pattern audioUrlPattern = Pattern.compile("\\[s:audio:url=(.+)\\]");
 
-    public static boolean handle(MessageChainBuilder messageChainBuilder, String output, MessageEvent event) {
+    public static boolean handle(MessageChainBuilder messageChainBuilder,
+                                 String output, MessageEvent event, boolean shouldQuiet) {
         if (StringUtils.isEmpty(output)) {
             return false;
         }
@@ -66,7 +67,9 @@ public class OutputHandler {
             output = output.replaceAll(audioUrlPattern.pattern(), "");
         }
 
-        messageChainBuilder.add(StringUtils.trim(output));
+        if (!shouldQuiet || !OutputHandler.isVoid(output)) {
+            messageChainBuilder.add(StringUtils.trim(output));
+        }
         return true;
     }
 
@@ -86,5 +89,9 @@ public class OutputHandler {
             }
         }
         return lineCount;
+    }
+
+    public static boolean isVoid(String str) {
+        return "#<void>".equals(str);
     }
 }

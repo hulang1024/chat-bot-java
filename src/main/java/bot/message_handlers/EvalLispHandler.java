@@ -22,9 +22,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EvalLispHandler {
-    private static Pattern usePrefixWithQuoteReplyPattern = Pattern.compile("^(\\s*#\\s+)\\S(.|\\s)*");
+    private static Pattern usePrefixWithQuoteReplyPattern = Pattern.compile("^(\\s*#\\s*)\\S(.|\\s)*");
     private static Pattern usePrefixWithoutQuoteReplyPattern = Pattern.compile("^(\\s*[!！]\\s*)\\S(.|\\s)*");
     private static Pattern useEnvPattern = Pattern.compile("\\s*#env\\s+([\\w-]+)");
+    private static Pattern maybeIdentifierPattern = Pattern.compile("^\\s*(\\S{1,30})\\s*");
 
     private Evaluator evaluator;
 
@@ -37,7 +38,8 @@ public class EvalLispHandler {
 
     public boolean testAndHandle(String messageString, MessageEvent event) {
         String expr;
-        boolean hasQuoteReply;
+        boolean hasQuoteReply = false;
+        boolean shouldQuiet = false;
 
         Matcher matcher = usePrefixWithoutQuoteReplyPattern.matcher(messageString);
         if (matcher.matches()) {
@@ -48,10 +50,15 @@ public class EvalLispHandler {
             if (matcher.matches()) {
                 expr = messageString.substring(matcher.group(1).length()).trim();
                 hasQuoteReply = true;
+            } else if (LispCodeChecker.maybeHasLispCode(messageString)) {
+                expr = messageString;
+                hasQuoteReply = false;
             } else {
-                if (LispCodeChecker.maybeHasLispCode(messageString)) {
-                    expr = messageString;
+                matcher = maybeIdentifierPattern.matcher(messageString);
+                if (matcher.matches()) {
+                    expr = matcher.group(1);
                     hasQuoteReply = false;
+                    shouldQuiet = true;
                 } else {
                     return false;
                 }
@@ -108,9 +115,11 @@ public class EvalLispHandler {
             if (canUseEnv) {
                 APIResult evalResult = evaluator.eval(expr, env.id, event.getSender(), group);
                 if (!evalResult.isOk()) {
-                    String text = EvalExnResultHandler.toReadableText(evalResult, expr, event);
-                    if (StringUtils.isNotEmpty(text)) {
-                        messageChainBuilder.add(BotEmoji.evalError + text);
+                    if (!shouldQuiet) {
+                        String text = EvalExnResultHandler.toReadableText(evalResult, expr, event);
+                        if (StringUtils.isNotEmpty(text)) {
+                            messageChainBuilder.add(BotEmoji.evalError + text);
+                        }
                     }
 
                     if (EvalExnResultHandler.isOutOfMemory(evalResult)) {
@@ -121,19 +130,22 @@ public class EvalLispHandler {
                             BlockUserManager.add(blockUser);
                             BlockUserManager.addMessage(messageChainBuilder, blockUser);
                         }
+                    } else if (shouldQuiet) {
+                        return true;
                     }
                 } else {
                     boolean isBigString = OutputHandler.isBigString(evalResult.output);
                     if (!isBigString) {
-                        boolean hasOutput = OutputHandler.handle(messageChainBuilder, evalResult.output, event);
+                        boolean hasOutput = OutputHandler.handle(messageChainBuilder,
+                                evalResult.output, event, shouldQuiet);
                         if (StringUtils.isNotEmpty(evalResult.value)) {
-                            if (!hasOutput || !"#<void>".equals(evalResult.value)) {
+                            if (!hasOutput || !OutputHandler.isVoid(evalResult.value)) {
                                 if (hasOutput) {
                                     // output后面加换行
                                     messageChainBuilder.add("\n");
                                 }
                                 isBigString = OutputHandler.isBigString(evalResult.value);
-                                if (!isBigString) {
+                                if (!isBigString && (!shouldQuiet || !OutputHandler.isVoid(evalResult.value))) {
                                     messageChainBuilder.add(StringUtils.trim(evalResult.value));
                                 }
                             }
